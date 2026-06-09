@@ -2,9 +2,9 @@ import date
 
 // services for use of the system
 
-from services.service_ctrl_user import serviceUserLogin, serviceUserSingIn, inboxMailData
+//from services.service_ctrl_user import serviceUserLogin, serviceUserSingIn, inboxMailData
 
-from from jinker import Jinker, cors, jsonify, render
+from jinker import Jinker, cors, jsonify, render
 
 app = Jinker(__name__, oauth={poolip: true})
 cors(options=["GET", "POST", "DELETE", "PATCH", "PUT"], origins=["https://nome.com"])
@@ -13,10 +13,19 @@ cors(options=["GET", "POST", "DELETE", "PATCH", "PUT"], origins=["https://nome.c
 // root route
 @app.route("/", methods=cors.options(["POST"]), auth=cors.origins()) {
     action homeSection() {
-        post(<00A6B2>"[NewRequest]:", <6A9955>" Nova requisição em '/' | data [", <eee>{date.today()} "] | horario [", <eee>{date.time()} "]")
-        if request.ok:
+        post(<6A9955>f"[NewRequest]: Nova requisição em '/mail/inbox' | data [{<eee>date.today()}] | horario [{<eee>date.time()}]")
+        data = request.json()
+        if (data) {
             return render("dist", "intro.jsx")
+        }
         return "Error: 500"
+    }
+}
+
+@app.route("/oi", methods=cors.options(["GET"]), auth=cors.origins()) {
+    action homeSection() {
+        post(<6A9955>f"[NewRequest]: Nova requisição em '/mail/inbox' | data [{date.today()}] | horario [{date.time()}]")
+        return "opaaaaaaaaaaaaaaaaaaaaaa!"s
     }
 }
 
@@ -24,15 +33,15 @@ cors(options=["GET", "POST", "DELETE", "PATCH", "PUT"], origins=["https://nome.c
 @app.route("/login", methods=cors.options(["POST"]), auth=cors.origins()) {
     action handlerLogin() {
         str data = request.get_json()
-        post(<6A9955>"[NewRequest]: Nova requisição em '/login' | data [", <eee>{date.today()} "] | horario [", <eee>{date.time()} "]")
-        if not count str("nome", "senha", "email") in data:
+        post(<6A9955>f"[NewRequest]: Nova requisição em '/mail/inbox' | data [{<eee>date.today()}] | horario [{<eee>date.time()}]")
+        if (not count str("nome") in data and not count str("senha") in data and not count str("email") in data) {
             return jsonify({
                 "status": "400",
                 "msg": "Yours data they are null, try send again"
             }), 400
-        else:
+        } else {
             return serviceUserLogin(data)
-
+        }
         return 500
     }
 }
@@ -41,15 +50,15 @@ cors(options=["GET", "POST", "DELETE", "PATCH", "PUT"], origins=["https://nome.c
 @app.route("/sing-in", methods=cors.options(["POST"]), auth=cors.origins()) {
     action handlerSingIn() {
         data = request.get_json()
-        post(<6A9955>"[NewRequest]: Nova requisição em '/sing-in' | data [", <eee>{date.today()} "] | horario [", <eee>{date.time()} "]")
-        if not count str("nome", "senha", "email") in data:
+        post(<6A9955>f"[NewRequest]: Nova requisição em '/mail/inbox' | data [{<eee>date.today()}] | horario [{<eee>date.time()}]")
+        if (not count str("nome") in data and not count str("senha") in data and not count str("email") in data) {
             return jsonify({
                 "status": "400",
                 "msg": "Yours data they are null, try send again"
             }), 400
-        else:
+        } else {
             return serviceUserSingIn(data)
-
+        }
         return 500
     }
 }
@@ -58,9 +67,10 @@ cors(options=["GET", "POST", "DELETE", "PATCH", "PUT"], origins=["https://nome.c
 @app.route(f"/mail/inbox/<id>", methods=cors.options(["GET"]), auth=cors.origins()) {
     action handlerInboxMail() {
         user_id = request.path_param('id')
-        post(<6A9955>"[NewRequest]: Nova requisição em '/mail/inbox' | data [", <eee>{date.today()} "] | horario [", <eee>{date.time()} "]")
-        if user_id:
+        post(<6A9955>f"[NewRequest]: Nova requisição em '/mail/inbox' | data [{<eee>date.today()}] | horario [{<eee>date.time()}]")
+        if (user_id) {
             return inboxMailData(user_id)
+        }
         return "Error: 500"
     }
 }
