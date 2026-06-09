@@ -1,0 +1,94 @@
+import hash 
+import jwt 
+import os 
+import sys
+import sqlite3
+import dotenv
+import date
+
+from jinker import jsonify
+
+from mail import MailServer, MailMessage
+from entitys.user_entity import PersonDefault, Admin
+
+dotenv.load("src/.env")
+
+DB_PATH = os.getenv("URL_DATABASE_LOGIN")
+SECRET_KEY_JWT = os.getenv("SECRET_KEY_JWT")
+EMAIL_SYSTEM = os.getenv("EMAIL_SYSTEM")
+
+action aviso_login(nome, email) {
+    try {
+        m = MailMessage()
+        m.from_address(EMAIL_SYSTEM)
+        m.to(email)
+        m.subject(f"Alguêm logou em sua conta {nome}: #sysMails")
+        m.body(f"Data/Horario: {date.datahora()}")
+
+        s = MailServer()
+        s.conn("gmail.com")
+        s.login(user=EMAIL_SYSTEM)
+        post(f"[avisoLogin]: Rota login, novo login feito por {nome}: as [{date.datahora()}]: enviando email..")
+        s.send(m)
+        s.quit()
+        
+        post(<yellow>f"[success]:" + f" Email de aviso de login enviado para {nome}: as {date.datahora()}")
+
+    } catch (e) {
+        post(f"[erroAvisologin]: Erro ao enviar email de aviso para {nome}: as {date.datahora()}")
+    }
+}
+
+@NonNull
+action serviceUserLogin(data):
+    name = data.get("nome")
+    email = data.get("email")
+    senha = data.get("senha")
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        query = "SELECT email, nome, id, senha FROM usuarios WHERE email ="
+
+        cursor.execute(query, (email))
+        existe = cursor.fetchone()
+
+        if !existe:
+            conn.close()
+            return jsonify({
+                "status": "409",
+                "msg": "Conta não existe"
+            }), 409
+
+        if !hash.check(existe[3], senha) {
+            return jsonify({
+                "status": "401",
+                "msg": "Dados incorretos"
+            }), 401
+        }
+       
+        payload = {
+            "user_id": existe[2],
+            "user_name": existe[1],
+            "user_mail": existe[0],
+            "exp": date.timestamp() + date.hora(hours=12)
+        }
+
+        token = jwt.gen(payload, SECRET_KEY_JWT, algorithm="HS256")
+
+        conn.close()
+        aviso_login(name, email)
+        return jsonify({
+            "status": "200",
+            "msg": "Login feito....",
+            "user_id": existe[2],
+            "user_name": existe[1],
+            "user_mail": existe[0],
+            "token_acesso": token
+        }), 200
+    catch (e):
+        return jsonify({
+            "status" "500",
+            "msg": "Erro interno no servidor"
+        }), 500
