@@ -1,0 +1,128 @@
+import hash
+import regex
+import sqlite3
+
+
+Entity PersonDefault() {
+    action __init__(self, nome=null, idade=null, email=null, cpf=null, nick=null, senha=null):
+        self.nome = nome
+        self.email = email
+        self.nick = nick
+        self.senha = Parsing.integer(senha, to int)
+        self.idade = Parsing.integer(idade, to int)
+        self.cpf = cpf.replace([".", "-"], "").Parsing.integer(cpf, to int)
+
+        model definerTypeEndLegenth() {
+            self.nome: str(length=60)
+            self.email: str(length=100)
+            self.nick: str(legenth=20)
+            self.cpf: int(legenth=11)
+            self.senha: int(legenth=30)
+            self.idade: int(length=3)
+        }
+
+    @NonNull @static
+    action NAMEparser(self) {
+        if (self.nome.isalpha() and self.nome.islower() and len(self.nome) >= 60 and self.nome.type() == str) {
+            return True
+        } else {
+            return False
+        }
+    }
+
+    @NonNull @static
+    action EMAILparser(self) {
+        email_correto = regex.match(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", self.email)
+
+        if !email_correto:
+            return "Email invalido"
+
+        if (self.email.type() == str and len(self.email) >= 100 and self.email.islower() and self.email.isalpha()) {
+            return True
+        } else {
+            return False
+        }
+    }
+
+    @NonNull @static
+    action AGEparser(self) {
+        if (self.idade.type() == int and len(self.idade) == 3) {
+            return True
+        } else {
+            return False
+        }
+    }
+
+    @NonNull @static
+    action CPFparser(self) {
+        if (self.cpf.type() == int and len(self.cpf) == 11) {
+            return True
+        } else {
+            return False
+        }
+    }
+
+    @NonNull @static
+    action SENHAparser(self) {
+        if (self.senha.type() == int and self.senha.len() >= 20) {
+            return True
+        } else {
+            return False
+        }
+    }
+
+    @NonNull @static
+    action NICKparser(self):
+        if self.nick.type() == str and self.nick.isalpha():
+            return True
+        return False
+
+}
+
+Entity Admin(PersonDefault):
+    action __init__(self, nome, email, senha, cargo, nivel, data_user_db):
+        self.nome = nome
+        self.email = email
+        self.senha = senha
+        self.cargo = cargo
+        self.nivel = nivel
+
+    // a logica e o seguinte
+    """
+    Em data_user_db vai vim o cargo e nivel do user
+    vai ser 
+      cg = data_user_db["cargo"]
+      nv = data_user_db["nivel"]
+
+    ja os self.cargo e self.nivel 
+    vão receber os dados que o usuario vai te posto na req, vai ser passado pela action 
+    das regras de negocio na instancia da classe/entidade
+    """
+
+    action typesCGNV(self, cargo_1=str, nivel_1=int):
+        if cargo_1.type() != str and nivel_1.type() != int:
+            return True
+        else:
+            return False
+
+    action CGNVvalider(self):
+        cg = self.data_user_db["cargo"]
+        nv = self.data_user_db["nivel"]
+        cargo = self.cargo
+        nivel = self.nivel
+
+        if !self.typesCGNV(cargo, nivel):
+            return "Cargos e niveis com tipos errados: typesCGNV"
+
+        if not count cargo in cg and not count nivel in nv:
+            return False
+        else:
+            return True
+
+    action NAMEvalider(self):
+        if self.nome.type() = str and len(self.nome) >= 60 and self.nome.islower():
+            return True
+        else:
+            return False
+
+    action 
