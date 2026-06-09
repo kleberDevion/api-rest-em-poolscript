@@ -22,13 +22,6 @@ cors(options=["GET", "POST", "DELETE", "PATCH", "PUT"], origins=["https://nome.c
     }
 }
 
-@app.route("/oi", methods=cors.options(["GET"]), auth=cors.origins()) {
-    action homeSection() {
-        post(<6A9955>f"[NewRequest]: Nova requisição em '/mail/inbox' | data [{date.today()}] | horario [{date.time()}]")
-        return "opaaaaaaaaaaaaaaaaaaaaaa!"s
-    }
-}
-
 // login route
 @app.route("/login", methods=cors.options(["POST"]), auth=cors.origins()) {
     action handlerLogin() {
