@@ -1,29 +1,19 @@
-import hash
 import regex
-import sqlite3
 
 
 Entity PersonDefault() {
-    action __init__(self, nome=null, idade=null, email=null, cpf=null, nick=null, senha=null):
+    action __init__(self, nome, idade, email, cpf, nick, senha) {
         self.nome = nome
         self.email = email
         self.nick = nick
         self.senha = Parsing.integer(senha, to int)
         self.idade = Parsing.integer(idade, to int)
-        self.cpf = cpf.replace([".", "-"], "").Parsing.integer(cpf, to int)
+        self.cpf = Parsing.integer(cpf, to int)
+    }
 
-        model definerTypeEndLegenth() {
-            self.nome: str(length=60)
-            self.email: str(length=100)
-            self.nick: str(legenth=20)
-            self.cpf: int(legenth=11)
-            self.senha: int(legenth=30)
-            self.idade: int(length=3)
-        }
-
-    @NonNull @static
+    @NonNull
     action NAMEparser(self) {
-        if (self.nome.isalpha() and self.nome.islower() and len(self.nome) >= 60 and self.nome.type() == str) {
+        if (self.nome.isalpha() and len(self.nome) <= 60 and type(self.nome) == str) {
             return True
         } else {
             return False
@@ -34,10 +24,11 @@ Entity PersonDefault() {
     action EMAILparser(self) {
         email_correto = regex.match(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", self.email)
 
-        if !email_correto:
+        if (!email_correto) {
             return "Email invalido"
+        }
 
-        if (self.email.type() == str and len(self.email) >= 100 and self.email.islower() and self.email.isalpha()) {
+        if (self.email.type() == str and len(self.email) <= 100 and self.email.islower()) {
             return True
         } else {
             return False
@@ -46,7 +37,7 @@ Entity PersonDefault() {
 
     @NonNull @static
     action AGEparser(self) {
-        if (self.idade.type() == int and len(self.idade) == 3) {
+        if (self.idade.type() == int and len(self.idade) <= 3) {
             return True
         } else {
             return False
@@ -64,7 +55,7 @@ Entity PersonDefault() {
 
     @NonNull @static
     action SENHAparser(self) {
-        if (self.senha.type() == int and self.senha.len() >= 20) {
+        if (self.senha.type() == int and self.senha.len() <= 20) {
             return True
         } else {
             return False
@@ -72,32 +63,25 @@ Entity PersonDefault() {
     }
 
     @NonNull @static
-    action NICKparser(self):
-        if self.nick.type() == str and self.nick.isalpha():
+    action NICKparser(self) {
+        if (self.nick.type() == str and self.nick.isalpha() and self.nome.islower() and len(self.nick) <= 20) {
             return True
+        }
         return False
+    }
 
 }
 
-Entity Admin(PersonDefault):
-    action __init__(self, nome, email, senha, cargo, nivel, data_user_db):
-        self.nome = nome
-        self.email = email
-        self.senha = senha
+
+// 10/06/2026: Validar o funcionamento do CGNVvalider, pois não foi testado.
+
+Entity Admin():
+    action __init__(self, nome, email, senha, cargo=null, nivel=null, data_user_db=null):
         self.cargo = cargo
         self.nivel = nivel
-
-    // a logica e o seguinte
-    """
-    Em data_user_db vai vim o cargo e nivel do user
-    vai ser 
-      cg = data_user_db["cargo"]
-      nv = data_user_db["nivel"]
-
-    ja os self.cargo e self.nivel 
-    vão receber os dados que o usuario vai te posto na req, vai ser passado pela action 
-    das regras de negocio na instancia da classe/entidade
-    """
+        self.nome = nome
+        self.senha = Parsing.integer(senha, to int)
+        self.email = email
 
     action typesCGNV(self, cargo_1=str, nivel_1=int):
         if cargo_1.type() != str and nivel_1.type() != int:
@@ -114,13 +98,30 @@ Entity Admin(PersonDefault):
         if !self.typesCGNV(cargo, nivel):
             return "Cargos e niveis com tipos errados: typesCGNV"
 
-        if not count cargo in cg and not count nivel in nv:
+        if not count str(cargo) in cg and not count str(nivel) in nv:
             return False
         else:
             return True
 
     action NAMEvalider(self):
-        if self.nome.type() = str and len(self.nome) >= 60 and self.nome.islower():
+        if self.nome.type() == str and len(self.nome) <= 60 and self.nome.islower():
+            return True
+        else:
+            return False
+
+    action EMAILvalider(self):
+        email_correto = regex.match(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", self.email)
+
+        if (!email_correto) {
+            return "Email invalido"
+        }
+        if self.email.islower() and len(self.email) <= 100:
+            return True
+        else:
+            return False
+
+    action SENHAvalider(self):
+        if self.senha.type() == int and self.senha.len() <= 20:
             return True
         else:
             return False

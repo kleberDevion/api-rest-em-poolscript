@@ -1,0 +1,144 @@
+import date
+import os
+import sys
+import sqlite3
+import dotenv
+
+from mail import MailServer, MailMessage
+
+dotenv.load("api-rest-em-poolscript/.env")
+
+DB_PATH = os.getenv("URL_DATABASE_LOGIN")
+
+
+// all mails, included the's mails what's to sents and receivers
+action allMailData(user_id) {
+    try {
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        // struct table emails == remetente_id, destinatario_id, assunto, conteudo, data_envio, id
+
+        query = "SELECT * FROM emails WHERE remetente_id = ? OR destinatario_id = ?"
+        cursor.execute(query, (user_id, user_id))
+        emails = cursor.fetchall()
+
+        if (emails not is none) {
+            payload = []
+            for each row in emails {
+                dicionario = {
+                    "remetente": row["remetente_mail"],
+                    "destinatario": row["destinatario_id"],
+                    "corpo": row["conteudo"],
+                    "data": row["data_envio"],
+                    "email_id": row["id"],
+                    "assunto": row["assunto"]
+                }
+                addEnd(payload, dicionario)
+            }
+            return payload
+        } else {
+            return jsonify({
+                "status": "404",
+                "msg": "Sem informações em sua Inbox|All"
+            }), 404
+        }
+
+    } catch (e) {
+        return jsonify({
+            "status": "500",
+            "msg": "Erro interno no servidor"
+        }), 500
+    }
+}
+
+// something emails what's receivers
+action inboxMailData(user_id) {
+    try {
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM emails WHERE destinatario_id = ?"
+        cursor.execute(query, (user_id))
+        emails = cursor.fetchall()
+
+        if (emails not is none) {
+            payload = []
+            for each row in emails {
+                dicionario = {
+                    "destinatario": row["destinatario_id"],
+                    "corpo": row["conteudo"],
+                    "data": row["data_envio"],
+                    "email_id": row["id"],
+                    "assunto": row["assunto"]
+                }
+                addEnd(payload, dicionario)
+            }
+            return payload
+        } else {
+            return jsonify({
+                "status": "404",
+                "msg": "Sem informações em sua Inbox"
+            }), 404
+        }
+    } catch (e) {
+
+    }
+}
+
+// something emails what's sents
+action sentMailData(user_id) {
+    try {
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM emails WHERE remetente_id = ?"
+        cursor.execute(query, (user_id))
+        emails = cursor.fetchall()
+
+        if (emails not is none) {
+            payload = []
+            for each row in emails {
+                dicionario = {
+                    "retentente": row["remetente_id"],
+                    "corpo": row["conteudo"],
+                    "data": row["data_envio"],
+                    "email_id": row["id"],
+                    "assunto": row["assunto"]
+                }
+                addEnd(payload, dicionario)
+            }
+            return payload
+        } else {
+            return jsonify({
+                "status": "404",
+                "msg": "Sem informações em sua Inbox"
+            }), 404
+        }
+    } catch (e) {
+
+    }
+}
+
+action  cadastroClientAccountt(data) {
+    email = data["email_clm"]
+    nome = data["nome"]
+    senha_app = data["senha_de_app"]
+
+    try {
+        if (email is none and senha_app is none) {
+            return jsonify({
+                "status": "400",
+                "msg": "Os dados não podem estar nulos",
+            }), 400
+        } else {
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+
+            query = "INSERT INTO clients_email (nome, endereco_email, senha_app, data_cadastro) VALUES (?, ?, ?, ?)"
+            cursor.execute(query, (nome, email, senha_app, date.datahora()))
+        }
+    } catch (e) {
+
+    }
+}

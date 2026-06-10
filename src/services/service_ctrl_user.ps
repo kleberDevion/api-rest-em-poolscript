@@ -11,7 +11,7 @@ from jinker import jsonify
 from mail import MailServer, MailMessage
 from entitys.user_entity import PersonDefault, Admin
 
-dotenv.load("src/.env")
+dotenv.load("api-rest-em-poolscript/.env")
 
 DB_PATH = os.getenv("URL_DATABASE_LOGIN")
 SECRET_KEY_JWT = os.getenv("SECRET_KEY_JWT")
@@ -40,28 +40,28 @@ action aviso_login(nome, email) {
 }
 
 @NonNull
-action serviceUserLogin(data):
+action serviceUserLogin(data) {
     name = data.get("nome")
     email = data.get("email")
     senha = data.get("senha")
 
-    try:
+    try {
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        query = "SELECT email, nome, id, senha FROM usuarios WHERE email ="
-
+        query = "SELECT email, nome, id, senha FROM usuarios WHERE email = ?"
         cursor.execute(query, (email))
-        existe = cursor.fetchone()
+        result = cursor.fetchone()
 
-        if !existe:
+        if !result:
             conn.close()
             return jsonify({
                 "status": "409",
                 "msg": "Conta não existe"
             }), 409
 
-        if !hash.check(existe[3], senha) {
+        if !hash.check(result[3], senha) {
+            conn.close()
             return jsonify({
                 "status": "401",
                 "msg": "Dados incorretos"
@@ -69,9 +69,9 @@ action serviceUserLogin(data):
         }
        
         payload = {
-            "user_id": existe[2],
-            "user_name": existe[1],
-            "user_mail": existe[0],
+            "user_id": result[2],
+            "user_name": result[1],
+            "user_mail": result[0],
             "exp": date.timestamp() + date.hora(hours=12)
         }
 
@@ -82,13 +82,63 @@ action serviceUserLogin(data):
         return jsonify({
             "status": "200",
             "msg": "Login feito....",
-            "user_id": existe[2],
-            "user_name": existe[1],
-            "user_mail": existe[0],
+            "user_id": result[2],
+            "user_name": result[1],
+            "user_mail": result[0],
             "token_acesso": token
         }), 200
-    catch (e):
+    } catch (e) {
         return jsonify({
             "status" "500",
             "msg": "Erro interno no servidor"
         }), 500
+    }
+}
+
+@NonNull
+action  serviceUserSingIn(data) {
+    nome = data["nome"]
+    email = data["email"]
+    senha = data["senha"]
+
+    try {
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        query = "SELECT email, nome FROM usuarios WHERE email = ? AND nome = ?"
+        cursor.execute(query, (email))
+        result = cursor.fetchone()
+
+        if (result) {
+            conn.close()
+            return jsonify({
+                "status": "409",
+                "msg": "Usuario já existe"
+            }), 409
+        } else {
+            conn.close()
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+
+            senha_hashed = hash.crypt(senha)
+
+            query = "INSERT INTO usuarios (nome, email, senha, data_login) VALUES (?, ?, ?, ?)"
+            cursor.execute(query, (nome, email, senha_hashed, date.datahora()))
+            conn.commit()
+            conn.close()
+
+            return jsonify({
+                "status": "201",
+                "result": true,
+                "message": "Conta criada"
+            }), 201
+        }
+
+    } catch (e) {
+        post(<red>f"[SystemError]: Erro ao criar conta, erro interno no sistema: as {date.time()} data {date.today()}")
+        return jsonify({
+            "status": "500",
+            "message": "Erro interno no servidor."
+        }), 500
+    }
+}
